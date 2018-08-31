@@ -10,13 +10,16 @@
   touchscreen).  The loadbank communications are over UDP.  Writes to multi-register 
   values must be carried out in a single multiple-register write (Function Code 16).
 
+  There is a holdoff of 500ms on sending commands to the loadbank to prevent excessive
+  wear on the contactors.
+
   The command can be written using either the float32 or uint16 formats - see the
   register definitions below:
 
-  40001:  float32 kW command - lower 16bits units: kW
-  40002:  float32 kW command - upper 16bits 
-  40003:  float32 PF command - lower 16bits units: normalized 0-1
-  40004:  float32 PF command - upper 16bits
+  40001:  float32 kW command lower 16bits units: kW
+  40002:  float32 kW command upper 16bits 
+  40003:  float32 PF command lower 16bits units: normalized 0-1
+  40004:  float32 PF command upper 16bits
   40201:  uint16  kW command - units: kW
   40202:  uint16  PF command - units: % (range 0-100)
     
@@ -59,36 +62,28 @@ void setup()
   ethernet_udp.begin(LOCAL_UDP_PORT);         // open UPD port
   Serial.println("Ethernet interface started"); 
 
-
-  // Fill MbData
-//  Mb.SetBit(0,false);
-  Mb.MbData[0] = 0;
-  Mb.MbData[1] = 0;
-  Mb.MbData[2] = 0;
-  Mb.MbData[3] = 0;
-  Mb.MbData[4] = 0;
-  Mb.MbData[5] = 0;
-  Mb.MbData[6] = 0;
-  Mb.MbData[7] = 0;
-  Mb.MbData[8] = 0;
-  Mb.MbData[9] = 0;
-  Mb.MbData[10] = 0;
-  Mb.MbData[11] = 0;
+#ifdef DEBUG 
   // print menu
   Serial.println("0 - print the first 12 words of the MbData space");
   Serial.println("1 - fill MbData with 0kW, 1.0PF");
   Serial.println("2 - fill MbData with 3000kW, 0.9PF");
+#endif
 }
 /** end of setup code *************************************************************************************/
 
 /** beginning of execution code ***************************************************************************/
 void loop()
 {
+  // constants
+
+  // automatics
+  uint16 time_in_ms;
   uint8 * packet_ptr;
   uint16 packet_size;
   bool new_command_flag = FALSE;
-  union float_bytes { float32 float_rep[2];  uint16 uint16_rep[4]; }; 
+  // statics
   static float_bytes float_data;
+  static uint16 time_base = 0;
 
 #ifdef DEBUG                            
   if (Serial.available() > 0) {
@@ -106,7 +101,7 @@ void loop()
 
   if( Mb.MbsRun() )    // run Modbus slave to process received Modbus commands
   {
-    //check for changed register 40001-40004
+    //check for changed register 40001-40004 (float32 representation)
     if (      float_data.uint16_rep[0] != Mb.MbData[0] ||   
               float_data.uint16_rep[1] != Mb.MbData[1] ||
               float_data.uint16_rep[2] != Mb.MbData[2] ||
@@ -118,7 +113,7 @@ void loop()
               float_data.uint16_rep[3] = Mb.MbData[3]; 
               new_command_flag = TRUE;
     }
-    //check for changed register 40201-40202
+    //check for changed register 40201-40202 (uint16 representation)
     else if ( (uint16)(float_data.float_rep[0])     != Mb.MbData[200] ||  
               (uint16)(float_data.float_rep[1]*100) != Mb.MbData[201] )
     {
@@ -126,9 +121,12 @@ void loop()
               float_data.float_rep[1] = ((float32)(Mb.MbData[201]))/100;
               new_command_flag = TRUE;
     }
-    
-    if ( new_command_flag == TRUE)
+    // get time
+    time_in_ms = (uint16)(millis());
+    if ( new_command_flag == TRUE && (time_in_ms - time_base) > 500 )  // holdoff of 500ms to prevent accelerated contactor wear
     {
+      // reset timer
+      time_base = time_in_ms;
       new_command_flag = FALSE;
       // synchronize the float32 and uint16 registers
       Mb.MbData[0] = float_data.uint16_rep[0];
@@ -139,7 +137,7 @@ void loop()
       Mb.MbData[201] = (uint16)(float_data.float_rep[1]*100); 
       Serial.println(float_data.float_rep[0]);     
       
-      // build and send kw and pf packets using modbus register data
+      // build and send kw and pf command packets using modbus register data
       build_packet(KW_COMMAND, float_data.float_rep[0], &packet_ptr, &packet_size);
       send_udp_packet(ethernet_udp, loadbank_ip_address, LOADBANK_PORT, packet_ptr, packet_size);
       build_packet(PF_COMMAND, float_data.float_rep[1], &packet_ptr, &packet_size);

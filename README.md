@@ -11,10 +11,10 @@ loadbank_gateway - an applicatoin built for Arduino with Etehrnet shield.   Acce
   The command can be written using either the float32 or uint16 formats - see the
   register definitions below:
 
-  40001:  float32 kW command - lower 16bits units: kW
-  40002:  float32 kW command - upper 16bits 
-  40003:  float32 PF command - lower 16bits units: normalized 0-1
-  40004:  float32 PF command - upper 16bits
+  40001:  float32 kW command lower 16bits - units: kW
+  40002:  float32 kW command upper 16bits 
+  40003:  float32 PF command lower 16bits - units: normalized 0-1
+  40004:  float32 PF command upper 16bits
   40201:  uint16  kW command - units: kW
   40202:  uint16  PF command - units: % (range 0-100)
     

@@ -46,7 +46,7 @@ void send_udp_packet(EthernetUDP ethernet_udp, IPAddress ServerIp, uint16 Port, 
     ethernet_udp.write(packet_array[i]);
   }
   ethernet_udp.endPacket();
-  delay(10);
+  delay(20);
 }
 
 

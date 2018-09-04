@@ -12,6 +12,8 @@ typedef short           sint16;
 typedef long            sint32;
 typedef float           float32;
 typedef double          float64;
+
+union float_bytes { float32 float_rep[2];  uint16 uint16_rep[4]; }; 
 // type definitions END
 //**************************************************************************************
 

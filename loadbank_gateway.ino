@@ -48,7 +48,7 @@ IPAddress gateway(192, 168, 0, 49);
 IPAddress subnet(255, 255, 0, 0);
 
 EthernetUDP ethernet_udp;
-IPAddress loadbank_ip_address(192, 168, 100, 11);  // Simplex loadbank PLC address
+IPAddress loadbank_ip_address(192, 168, 100, 1);  // Simplex loadbank PLC address
 
 /** beginning of setup code  **********************************************************************************/
 void setup()

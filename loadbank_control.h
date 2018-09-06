@@ -27,7 +27,7 @@ union float_bytes { float32 float_rep[2];  uint16 uint16_rep[4]; };
 #define TRUE            1
 //#define DEBUG
 
-void send_tcp_packet(EthernetClient client, IPAddress ServerIp, uint16 Port, uint8 * packet_ptr, uint16 packet_size);
+//void send_tcp_packet(EthernetClient client, IPAddress ServerIp, uint16 Port, uint8 * packet_ptr, uint16 packet_size);
 void send_udp_packet(EthernetUDP ethernet_udp, IPAddress ServerIp, uint16 Port, uint8 packet_array[], uint16 packet_size);
 void build_packet(uint8 command, float32 input_value, uint8 ** packet_ptr, uint16 * packet_size); 
 void float_to_bytes_swapped(float32 float_val, uint8 byte_array[]);

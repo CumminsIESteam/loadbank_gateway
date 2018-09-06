@@ -16,12 +16,12 @@
   The command can be written using either the float32 or uint16 formats - see the
   register definitions below:
 
-  40001:  float32 kW command lower 16bits units: kW
-  40002:  float32 kW command upper 16bits 
-  40003:  float32 PF command lower 16bits units: normalized 0-1
-  40004:  float32 PF command upper 16bits
-  40201:  uint16  kW command - units: kW
-  40202:  uint16  PF command - units: % (range 0-100)
+  40001:  float32 R/W kW command lower 16bits units: kW \
+  40002:  float32 R/W kW command upper 16bits 
+  40003:  float32 R/W PF command lower 16bits units: normalized 0-1
+  40004:  float32 R/W PF command upper 16bits
+  40201:  uint16  R/W kW command - units: kW
+  40202:  uint16  R/W PF command - units: % (range 0-100)
     
   Author:  Mike Scheuerell
   written and tested with Arduino 1.8.5
@@ -41,28 +41,27 @@
 MgsModbus Mb;   // Modbus object
 int inByte = 0; // incoming serial byte
 
-// Ethernet settings (depending on MAC and Local network)
+// Local Ethernet settings (actual MAC is unknown)
 byte mac[] = {0x90, 0xA2, 0xDA, 0x0E, 0x94, 0xB5 };
 IPAddress ip(192, 168, 100, 10);
 IPAddress gateway(192, 168, 0, 49);
 IPAddress subnet(255, 255, 0, 0);
 
+//  UDP instance for communicating with loadbank
 EthernetUDP ethernet_udp;
 IPAddress loadbank_ip_address(192, 168, 100, 1);  // Simplex loadbank PLC address
 
 /** beginning of setup code  **********************************************************************************/
 void setup()
 {
-  // serial setup
-  Serial.begin(9600);
-  Serial.println("Serial interface started");
-
   // initialize Ethernet
   Ethernet.begin(mac, ip, gateway, subnet);   // start ethernet interface
   ethernet_udp.begin(LOCAL_UDP_PORT);         // open UPD port
-  Serial.println("Ethernet interface started"); 
 
 #ifdef DEBUG 
+  Serial.begin(9600);
+  Serial.println("Serial interface started");
+  Serial.println("Ethernet interface started"); 
   // print menu
   Serial.println("0 - print the first 12 words of the MbData space");
   Serial.println("1 - fill MbData with 0kW, 1.0PF");
@@ -85,7 +84,7 @@ void loop()
   static float_bytes float_data;
   static uint16 time_base = 0;
 
-#ifdef DEBUG                            
+#ifdef DEBUG  // test function for modfying Modbus registers independent of a Modbus client                          
   if (Serial.available() > 0) {
     // get incoming byte:
     inByte = Serial.read();
@@ -107,6 +106,7 @@ void loop()
               float_data.uint16_rep[2] != Mb.MbData[2] ||
               float_data.uint16_rep[3] != Mb.MbData[3] )
     {
+              // copy Modbus double-register float32 data in 16-bit chunks
               float_data.uint16_rep[0] = Mb.MbData[0]; 
               float_data.uint16_rep[1] = Mb.MbData[1]; 
               float_data.uint16_rep[2] = Mb.MbData[2];
@@ -117,11 +117,12 @@ void loop()
     else if ( (uint16)(float_data.float_rep[0])     != Mb.MbData[200] ||  
               (uint16)(float_data.float_rep[1]*100) != Mb.MbData[201] )
     {
+              // copy Modbus single-register uint16 data converted to float32 format
               float_data.float_rep[0] = (float32)(Mb.MbData[200]);
               float_data.float_rep[1] = ((float32)(Mb.MbData[201]))/100;
               new_command_flag = TRUE;
     }
-    // get time
+    // if either the uint16 or float32 Modbus registers have been updated, propogate the change to the other register type and send the new command to the loadbank 
     time_in_ms = (uint16)(millis());
     if ( new_command_flag == TRUE && (time_in_ms - time_base) > 500 )  // holdoff of 500ms to prevent accelerated contactor wear
     {
@@ -134,8 +135,7 @@ void loop()
       Mb.MbData[2] = float_data.uint16_rep[2];
       Mb.MbData[3] = float_data.uint16_rep[3];    
       Mb.MbData[200] = (uint16)(float_data.float_rep[0]);
-      Mb.MbData[201] = (uint16)(float_data.float_rep[1]*100); 
-      Serial.println(float_data.float_rep[0]);     
+      Mb.MbData[201] = (uint16)(float_data.float_rep[1]*100);     
       
       // build and send kw and pf command packets using modbus register data
       build_packet(KW_COMMAND, float_data.float_rep[0], &packet_ptr, &packet_size);

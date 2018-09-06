@@ -4,7 +4,7 @@
 #include "loadbank_control.h"
 
 
-
+/*  TCP Client not used
 void send_tcp_packet(EthernetClient client, IPAddress ServerIp, uint16 Port, uint8 * packet_ptr, uint16 packet_size)
 {
   uint8 packet_array[packet_size];
@@ -29,7 +29,7 @@ void send_tcp_packet(EthernetClient client, IPAddress ServerIp, uint16 Port, uin
     client.stop();
   }
 }
-
+*/
 
 void send_udp_packet(EthernetUDP ethernet_udp, IPAddress ServerIp, uint16 Port, uint8 packet_array[], uint16 packet_size)
 {
@@ -38,11 +38,11 @@ void send_udp_packet(EthernetUDP ethernet_udp, IPAddress ServerIp, uint16 Port, 
   
   ethernet_udp.beginPacket(ServerIp, Port);
   for(int i=0;i<packet_size;i++) {
-    #ifdef DEBUG
+#ifdef DEBUG
     if(packet_array[i] < 16){Serial.print("0");} // pad hex values with leading zero
     Serial.print(packet_array[i],HEX);
     if (i != packet_size - 1) {Serial.print(".");} else {Serial.println();}
-    #endif
+#endif
     ethernet_udp.write(packet_array[i]);
   }
   ethernet_udp.endPacket();
@@ -52,17 +52,17 @@ void send_udp_packet(EthernetUDP ethernet_udp, IPAddress ServerIp, uint16 Port, 
 
 void build_packet(uint8 command, float32 input_value, uint8 ** packet_ptr, uint16 * packet_size) 
 {
-   const uint8 pre_crc[5] = 
+   const uint8 pre_crc[5] = // undescript bytes needed before CRC
    {
      0x48, 0x41, 0x50, 0x2b, 0x54 
    };
-   const uint8 post_crc[] = { 0x0c };
-   const uint8 pre_address[] = { 0x00, 0x19, 0x00, 0x01, 0x20, 0x04 };
-   const uint8 address_arr[2][3] = { {0x8d, 0x02, 0x31} ,    /*  kw address - bit pattern identified for setting kw in loadbank PLC */
-                                     {0x87, 0x02, 0x31} };   /*  pf address - bit pattern identified for setting power factor in loadbank PLC */
+   const uint8 post_crc[] = { 0x0c };                                   // undescript byte needed after CRC
+   const uint8 pre_address[] = { 0x00, 0x19, 0x00, 0x01, 0x20, 0x04 };  // undescript bytes needed before address bytes
+   const uint8 address_arr[2][3] = { {0x8d, 0x02, 0x31} ,               /*  kw address - bit pattern identified for setting kw in loadbank PLC */
+                                     {0x87, 0x02, 0x31} };              /*  pf address - bit pattern identified for setting power factor in loadbank PLC */
    uint8 input_byte_array[4];
    uint8 offset;
-   union crc_union { uint16 u16;  uint8 u8arr[2]; };
+   union crc_union { uint16 u16;  uint8 u8arr[2]; };  // union used to conver between uint16 array and uint8 array (uint8 needed for sending data over Ethernet)
    crc_union crc_union;
    uint8 crc_bytes[2];
    uint8 crc_in[sizeof(pre_address) + sizeof(address_arr[1]) + sizeof(input_value)];   
@@ -137,6 +137,7 @@ uint16 calc_crc_ccitt_xmodem(const uint8 byte_array[], const uint16 array_size)
   return crc;
 }
 
+#ifdef DEBUG
 void print_bytes(uint8 byte_array[], uint16 array_size)
 {
     for  (uint8 j = 0; j < array_size; j++)
@@ -145,9 +146,11 @@ void print_bytes(uint8 byte_array[], uint16 array_size)
     }
     Serial.println();
 }
+#endif
 
 void loadbank_apply_change_numeric(EthernetUDP ethernet_udp, IPAddress loadbank_ip_address, uint16 l_loadbank_port)
 {
+  // nondescript bytes needed to command loadbank to apply the commanded load value
   const uint8 arr18[4][18] = {{0x48, 0x41, 0x50, 0x44, 0xbf, 0x29, 0x95, 0x08, 0x00, 0x19, 0x00, 0x01, 0x1e, 0x02, 0xb3, 0x01, 0x33, 0x00},
                               {0x48, 0x41, 0x50, 0x48, 0xbf, 0x29, 0x95, 0x08, 0x00, 0x19, 0x00, 0x01, 0x1e, 0x02, 0xb3, 0x01, 0x33, 0x00},
                               {0x48, 0x41, 0x50, 0x4b, 0xbf, 0x29, 0x95, 0x08, 0x00, 0x19, 0x00, 0x01, 0x1e, 0x02, 0xb3, 0x01, 0x33, 0x00},

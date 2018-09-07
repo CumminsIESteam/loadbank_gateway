@@ -7,12 +7,14 @@ There is a holdoff of 500ms on sending commands to the loadbank to prevent exces
 
 The command can be written using either the float32 or uint16 formats - see the register definitions below:
 
-40001:  float32 kW command lower 16bits - units: kW               \
-40002:  float32 kW command upper 16bits                           \
-40003:  float32 PF command lower 16bits - units: normalized 0-1   \
-40004:  float32 PF command upper 16bits                           \
-40201:  uint16  kW command - units: kW                            \
-40202:  uint16  PF command - units: % (range 0-100)               
+| Register	| Data Type	| R/W	| Description   			| Units 			|
+| :---:		|:---:		| :---:	|---						|:---:				|
+| 40001 	| float32 	| R/W  	|kW command lower 16bits	| kW            	|	
+| 40002 	| " "    	| " "  	|kW command upper 16bits	|  " "             	|	
+| 40003 	| float32 	| R/W  	|PF command lower 16bits	| normalized 0-1	|	
+| 40004		| " "   	| " "   |PF command upper 16bits	| " "              	|	
+| 40201		| uint16  	| R/W   |kW command             	| kW            	|	
+| 40202		| uint16  	| R/W   |PF command             	| % (range 0-100)	|	
     
 Author:  Mike Scheuerell
 written and tested with Arduino 1.8.5

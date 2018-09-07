@@ -1,5 +1,5 @@
 # loadbank_gateway
-An application built for Arduino with Etehrnet shield.   Accepts Modbus TCP register writes and translates them to commands for the Simplex loadbanks with AutomationDirect PLCs with ECOM Ethernet modules.
+An application built for Arduino with Ethernet shield.   Accepts Modbus TCP register writes and translates them to commands for the Simplex loadbank with AutomationDirect PLCs with ECOM Ethernet modules.
 
 This application uses the MgsModbus library for Modbus TCP slave functionality, which uses a single block of memory for all modbus data (mbData[] array).  The Modbus commands are relayed to the loadbank PLC using commands of unknown protocol (the command messages were deciphered by monitoring traffic from the Simplex touchscreen).  The loadbank communications are over UDP.  Writes to multi-register values must be carried out in a single multiple-register write (Function Code 16).
 

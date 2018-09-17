@@ -5,6 +5,10 @@ This application uses the MgsModbus library for Modbus TCP slave functionality, 
 
 There is a holdoff of 500ms on sending commands to the loadbank to prevent excessive wear on the contactors.
 
+**Device IP Settings**
+* Address: &nbsp;      192.168.100.10
+* Subnet: &nbsp;&nbsp; 255.255.0.0
+
 The command can be written using either the float32 or uint16 formats - see the register definitions below:
 
 | Register	| Data Type	| R/W	| Description   			| Units 			|
@@ -21,3 +25,4 @@ written and tested with Arduino 1.8.5
   
 V-0.1.0 2018-08-30
 initinal version
+

@@ -2,7 +2,9 @@
 
 // For Arduino 1.0
 EthernetServer MbServer(MB_PORT);
+#ifndef MB_SLAVE_ONLY
 EthernetClient MbmClient;
+#endif
 
 // #define DEBUG
 
@@ -10,7 +12,7 @@ MgsModbus::MgsModbus()
 {
 }
 
-
+#ifndef MB_SLAVE_ONLY
 //****************** Send data for ModBusMaster ****************
 void MgsModbus::Req(MB_FC FC, word Ref, word Count, word Pos)
 {
@@ -170,7 +172,7 @@ void MgsModbus::MbmProcess()
   if(MbmFC == MB_FC_WRITE_MULTIPLE_REGISTERS){
   }
 }
-
+#endif
 
 //****************** Recieve data for ModBusSlave ****************
 int MgsModbus::MbsRun()

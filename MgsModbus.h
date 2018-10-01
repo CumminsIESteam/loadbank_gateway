@@ -64,6 +64,7 @@
 
 #define MbDataLen 202 // length of the MdData array
 #define MB_PORT 502
+#define MB_SLAVE_ONLY
 
 enum MB_FC {
   MB_FC_NONE                     = 0,
@@ -85,16 +86,19 @@ public:
   word MbData[MbDataLen]; // memory block that holds all the modbus user data
   boolean GetBit(word Number);
   boolean SetBit(word Number,boolean Data); // returns true when the number is in the MbData range
+#ifndef MB_SLAVE_ONLY
   // modbus master
   void Req(MB_FC FC, word Ref, word Count, word Pos);
   void MbmRun();
   IPAddress remSlaveIP;
+#endif
   // modbus slave
   int MbsRun();  
   word GetDataLen();
 private: 
   // general
   MB_FC SetFC(int fc);
+#ifndef MB_SLAVE_ONLY
   // modbus master
   uint8_t MbmByteArray[260]; // send and recieve buffer
   MB_FC MbmFC;
@@ -102,6 +106,7 @@ private:
   void MbmProcess();
   word MbmPos;
   word MbmBitCount;
+#endif
   //modbus slave
   uint8_t MbsByteArray[260]; // send and recieve buffer
   MB_FC MbsFC;
